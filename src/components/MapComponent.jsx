@@ -21,7 +21,11 @@ const MapComponent = () => {
     }, [])
 
     return (
-        <MapContainer center={position} zoom={16} style={{ height: '300px', width: '100%' }}>
+        <MapContainer 
+        center={position} 
+        zoom={16} 
+        className='h-[300px] w-full rounded shadow'
+        >
             <RecenterMap position={position} />
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
