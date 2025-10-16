@@ -9,7 +9,7 @@ function MarkModal({ isOpen, onRequestClose, onSave, currentType, po, setPo }) {
             isOpen={isOpen}
             onRequestClose={onRequestClose}
             contentLabel="PO Modal"
-            overlayClassName="ixed inset-0 bg-black/50 flex justify-center items-center z-50"
+            overlayClassName="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
             className='bg-white rounded-md px-8 py-6 shadow-lg max-w-xs outline-none mx-auto'
         >
             <h3 className='text-lg font-bold mb-4'>

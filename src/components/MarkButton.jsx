@@ -1,19 +1,20 @@
-import React from 'react'
+import React from 'react';
 
 function MarkButton({ type, onClick }) {
-    const text = type === 'in' ? 'Clock In' : 'Clock Out'
-    const color = type === 'in'
+  const text = type === 'in' ? 'Mark Entry' : 'Mark Exit';
+  const color = type === 'in'
     ? 'bg-blue-600 hover:bg-blue-700'
-    : 'bg-green-600 hover:bg-green-700'
+    : 'bg-green-600 hover:bg-green-700';
 
-    return (
-        <button
-        className={`px-5 py-2 text-white rounded-md font-semibold shadow-md ${color} mx-2 transition-colors`}
-        onClick={() => onClick(type)}
-        >
-            {text}
-        </button>
-    )
+  return (
+    <button
+      className={`w-40 py-3 text-lg font-semibold text-white rounded shadow ${color} transition-colors duration-150 mx-2`}
+      style={{ minWidth: 150 }}
+      onClick={() => onClick(type)}
+    >
+      {text}
+    </button>
+  );
 }
 
-export default MarkButton
+export default MarkButton;

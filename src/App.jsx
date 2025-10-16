@@ -1,36 +1,51 @@
-import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import MapComponent from './components/MapComponent'
-import LoginPage from './components/LoginPage'
-import MyMarksPage from './components/MyMarksPage'
-
-function PrivateRoute({ children, authed }) {
-  return authed ? children : <Navigate to="/login" replace />;
-}
+import React, { useState } from 'react';
+import MapComponent from './components/MapComponent';
+import MarkButton from './components/MarkButton';
+import MarkModal from './components/MarkModal';
 
 function App() {
-  const [token, setToken] = useState(null); // null = not logged in, token string = logged in
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [currentType, setCurrentType] = useState(null);
+  const [po, setPo] = useState('');
+
+  const handleOpenModal = (type) => {
+    setCurrentType(type);
+    setModalIsOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalIsOpen(false);
+    setPo('');
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 250);
+  };
+
+  const handleSaveMark = () => {
+    // Aquí aún no guardamos nada, solo cierra el modal
+    handleCloseModal();
+  };
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginPage setToken={setToken} />} />
-        <Route path="/" element={<div className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
-          <h1 className="text-4xl font-bold mb-8 text-slate-800">Hourly Report Portal</h1>
-          <MapComponent />
-          {/* Aquí irían otros controles públicos */}
-        </div>} />
-        <Route
-          path="/my-marks"
-          element={
-            <PrivateRoute authed={!!token}>
-              <MyMarksPage token={token} />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </Router>
-  )
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
+      <h1 className="text-4xl font-bold mb-8 text-slate-800">Hourly Report Portal</h1>
+      <div className="mb-6 w-full max-w-xl mx-auto">
+        <MapComponent />
+      </div>
+      <div className="mb-8 flex gap-4">
+        <MarkButton type="in" onClick={handleOpenModal} />
+        <MarkButton type="out" onClick={handleOpenModal} />
+      </div>
+      <MarkModal
+        isOpen={modalIsOpen}
+        onRequestClose={handleCloseModal}
+        onSave={handleSaveMark}
+        currentType={currentType}
+        po={po}
+        setPo={setPo}
+      />
+    </div>
+  );
 }
 
-export default App
+export default App;
