@@ -23,9 +23,9 @@ const MapComponent = () => {
     <MapContainer 
     center={position} 
     zoom={16} 
-    style={{ height: '300px', width: '100%' }}
+    className="h-[300px] w-full"
     >
-      {/* <RecenterMap position={position} /> */}
+      <RecenterMap position={position} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
