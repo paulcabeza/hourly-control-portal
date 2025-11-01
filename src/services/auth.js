@@ -155,3 +155,89 @@ export const updateUser = async (userId, userData) => {
         throw error;
     }
 };
+
+// ===== MARKS API =====
+
+export const clockIn = async (latitude, longitude, poNumber) => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+        const response = await fetch(`${API_URL}/marks/clock-in`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                mark_type: 'clock_in',
+                latitude,
+                longitude,
+                po_number: poNumber || null,
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to clock in');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Clock in error:', error);
+        throw error;
+    }
+};
+
+export const clockOut = async (latitude, longitude, poNumber) => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+        const response = await fetch(`${API_URL}/marks/clock-out`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                mark_type: 'clock_out',
+                latitude,
+                longitude,
+                po_number: poNumber || null,
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to clock out');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Clock out error:', error);
+        throw error;
+    }
+};
+
+export const getMyMarks = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+        const response = await fetch(`${API_URL}/marks/my-marks`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get marks');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Get marks error:', error);
+        throw error;
+    }
+};

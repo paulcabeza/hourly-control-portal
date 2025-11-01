@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
+import MyMarksPage from './components/MyMarksPage';
 import UsersList from './components/UsersList';
 import CreateUser from './components/AdminPanel';
 import UserDetail from './components/UserDetail';
@@ -42,6 +43,14 @@ function App() {
           element={
             <PrivateRoute>
               <HomePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/my-marks"
+          element={
+            <PrivateRoute>
+              <MyMarksPage />
             </PrivateRoute>
           }
         />

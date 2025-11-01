@@ -3,13 +3,16 @@ import MapComponent from './MapComponent';
 import MarkButton from './MarkButton';
 import MarkModal from './MarkModal';
 import { useNavigate } from 'react-router-dom';
-import { logout, getCurrentUser } from '../services/auth';
+import { logout, getCurrentUser, clockIn, clockOut } from '../services/auth';
 
 export default function HomePage() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [currentType, setCurrentType] = useState(null);
   const [po, setPo] = useState('');
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,16 +26,60 @@ export default function HomePage() {
   const handleOpenModal = (type) => {
     setCurrentType(type);
     setModalIsOpen(true);
+    setError('');
+    setSuccess('');
   };
 
   const handleCloseModal = () => {
     setModalIsOpen(false);
     setPo('');
+    setError('');
   };
 
-  const handleSaveMark = () => {
-    // Aquí implementaremos la lógica para guardar la marca
-    handleCloseModal();
+  const handleSaveMark = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // Obtener ubicación actual
+      if (!navigator.geolocation) {
+        throw new Error('Geolocation is not supported by your browser');
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+
+          try {
+            if (currentType === 'in') {
+              await clockIn(latitude, longitude, po);
+              setSuccess('Clock In successful!');
+            } else {
+              await clockOut(latitude, longitude, po);
+              setSuccess('Clock Out successful!');
+            }
+            
+            // Cerrar modal después de 1.5 segundos
+            setTimeout(() => {
+              handleCloseModal();
+              setSuccess('');
+            }, 1500);
+          } catch (err) {
+            setError(err.message || 'Failed to save mark');
+          } finally {
+            setLoading(false);
+          }
+        },
+        (err) => {
+          setError('Unable to get your location. Please enable location services.');
+          setLoading(false);
+        }
+      );
+    } catch (err) {
+      setError(err.message || 'Failed to save mark');
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -90,6 +137,12 @@ export default function HomePage() {
                 Use the buttons below to clock in or clock out and keep track of your work hours.
               </p>
             </div>
+            <button
+              onClick={() => navigate('/my-marks')}
+              className="mt-4 md:mt-0 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition"
+            >
+              📋 View My History
+            </button>
           </div>
 
           {/* Map */}
@@ -111,6 +164,9 @@ export default function HomePage() {
             currentType={currentType}
             po={po}
             setPo={setPo}
+            loading={loading}
+            error={error}
+            success={success}
           />
         </div>
         <div className="text-xs text-gray-400 text-center mt-8">
