@@ -82,7 +82,7 @@ export default function UserDetail() {
   };
 
   const handleBackToList = () => {
-    navigate('/admin');
+    navigate('/admin/users');
   };
 
   if (loading) {

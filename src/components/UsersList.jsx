@@ -36,8 +36,8 @@ export default function UsersList() {
     navigate('/login');
   };
 
-  const handleBackToHome = () => {
-    navigate('/');
+  const handleBackToDashboard = () => {
+    navigate('/admin');
   };
 
   const handleCreateUser = () => {
@@ -68,10 +68,10 @@ export default function UsersList() {
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={handleBackToHome}
+            onClick={handleBackToDashboard}
             className="px-4 py-2 text-sm bg-gray-600 hover:bg-gray-700 rounded text-white font-semibold transition"
           >
-            ← Back to Home
+            ← Back to Dashboard
           </button>
           {user && (
             <div

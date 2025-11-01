@@ -3,9 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
 import MyMarksPage from './components/MyMarksPage';
+import AdminDashboard from './components/AdminDashboard';
 import UsersList from './components/UsersList';
 import CreateUser from './components/AdminPanel';
 import UserDetail from './components/UserDetail';
+import WeeklyReport from './components/WeeklyReport';
 import AdminRoute from './components/AdminRoute';
 import { getCurrentUser } from './services/auth';
 
@@ -59,6 +61,16 @@ function App() {
           element={
             <PrivateRoute>
               <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <PrivateRoute>
+              <AdminRoute>
                 <UsersList />
               </AdminRoute>
             </PrivateRoute>
@@ -80,6 +92,16 @@ function App() {
             <PrivateRoute>
               <AdminRoute>
                 <UserDetail />
+              </AdminRoute>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/weekly-report"
+          element={
+            <PrivateRoute>
+              <AdminRoute>
+                <WeeklyReport />
               </AdminRoute>
             </PrivateRoute>
           }

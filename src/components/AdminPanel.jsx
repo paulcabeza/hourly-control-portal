@@ -69,7 +69,7 @@ export default function CreateUser() {
   };
 
   const handleBackToList = () => {
-    navigate('/admin');
+    navigate('/admin/users');
   };
 
   if (!user) {
