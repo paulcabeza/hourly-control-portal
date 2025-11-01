@@ -59,3 +59,99 @@ export const logout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
 };
+
+export const createUser = async (userData) => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+        const response = await fetch(`${API_URL}/admin/users`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to create user');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Create user error:', error);
+        throw error;
+    }
+};
+
+export const getAllUsers = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+        const response = await fetch(`${API_URL}/admin/users`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get users');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Get users error:', error);
+        throw error;
+    }
+};
+
+export const getUserById = async (userId) => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get user');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Get user error:', error);
+        throw error;
+    }
+};
+
+export const updateUser = async (userId, userData) => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
+
+    try {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to update user');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Update user error:', error);
+        throw error;
+    }
+};

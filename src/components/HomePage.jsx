@@ -51,6 +51,14 @@ export default function HomePage() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          {user && user.is_superuser && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              🔧 Admin Panel
+            </button>
+          )}
           {user && (
             <div
               className="flex items-center px-3 py-1 border border-blue-100 rounded-full bg-blue-50 text-blue-900 shadow-sm transition select-none"
