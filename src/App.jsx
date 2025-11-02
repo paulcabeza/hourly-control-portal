@@ -1,50 +1,113 @@
-import React, { useState } from 'react';
-import MapComponent from './components/MapComponent';
-import MarkButton from './components/MarkButton';
-import MarkModal from './components/MarkModal';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './components/LoginPage';
+import HomePage from './components/HomePage';
+import MyMarksPage from './components/MyMarksPage';
+import AdminDashboard from './components/AdminDashboard';
+import UsersList from './components/UsersList';
+import CreateUser from './components/AdminPanel';
+import UserDetail from './components/UserDetail';
+import WeeklyReport from './components/WeeklyReport';
+import AdminRoute from './components/AdminRoute';
+import { getCurrentUser } from './services/auth';
+
+function PrivateRoute({ children }) {
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser();
+      setIsAuthenticated(!!user);
+      setLoading(false);
+    };
+    checkAuth();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+        <div className="text-xl text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" />;
+}
 
 function App() {
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [currentType, setCurrentType] = useState(null);
-  const [po, setPo] = useState('');
-
-  const handleOpenModal = (type) => {
-    setCurrentType(type);
-    setModalIsOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setModalIsOpen(false);
-    setPo('');
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 250);
-  };
-
-  const handleSaveMark = () => {
-    // Aquí aún no guardamos nada, solo cierra el modal
-    handleCloseModal();
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
-      <h1 className="text-4xl font-bold mb-8 text-slate-800">Hourly Report Portal</h1>
-      <div className="mb-6 w-full max-w-xl mx-auto">
-        <MapComponent />
-      </div>
-      <div className="mb-8 flex gap-4">
-        <MarkButton type="in" onClick={handleOpenModal} />
-        <MarkButton type="out" onClick={handleOpenModal} />
-      </div>
-      <MarkModal
-        isOpen={modalIsOpen}
-        onRequestClose={handleCloseModal}
-        onSave={handleSaveMark}
-        currentType={currentType}
-        po={po}
-        setPo={setPo}
-      />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <HomePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/my-marks"
+          element={
+            <PrivateRoute>
+              <MyMarksPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <PrivateRoute>
+              <AdminRoute>
+                <UsersList />
+              </AdminRoute>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/create"
+          element={
+            <PrivateRoute>
+              <AdminRoute>
+                <CreateUser />
+              </AdminRoute>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/user/:userId"
+          element={
+            <PrivateRoute>
+              <AdminRoute>
+                <UserDetail />
+              </AdminRoute>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/weekly-report"
+          element={
+            <PrivateRoute>
+              <AdminRoute>
+                <WeeklyReport />
+              </AdminRoute>
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
