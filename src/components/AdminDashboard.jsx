@@ -47,12 +47,33 @@ export default function AdminDashboard() {
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            onClick={handleBackToHome}
-            className="px-4 py-2 text-sm bg-gray-600 hover:bg-gray-700 rounded text-white font-semibold transition"
-          >
-            ← Back to Home
-          </button>
+          {/* Menú de navegación Admin */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBackToHome}
+              className="px-4 py-2 text-sm bg-gray-600 hover:bg-gray-700 rounded text-white font-semibold transition"
+            >
+              🏠 Home
+            </button>
+            <button
+              onClick={() => navigate('/admin')}
+              className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              🔧 Admin Panel
+            </button>
+            <button
+              onClick={() => navigate('/admin/users')}
+              className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              👥 Users
+            </button>
+            <button
+              onClick={() => navigate('/admin/weekly-report')}
+              className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              📊 Reports
+            </button>
+          </div>
           {user && (
             <div
               className="flex items-center px-3 py-1 border border-blue-100 rounded-full bg-blue-50 text-blue-900 shadow-sm transition select-none"
