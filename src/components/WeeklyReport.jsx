@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllUsers, getCurrentUser, logout } from '../services/auth';
-import { getWeeklyReport } from '../services/reports';
+import { getWeeklyReport, updateMark, createMark, deleteMark } from '../services/reports';
 
 export default function WeeklyReport() {
   const [user, setUser] = useState(null);
@@ -12,6 +12,9 @@ export default function WeeklyReport() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [editingMark, setEditingMark] = useState(null);
+  const [creatingMark, setCreatingMark] = useState(null); // { clockInId, markType }
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,7 +41,7 @@ export default function WeeklyReport() {
 
         setStartDate(lastSaturday.toISOString().split('T')[0]);
         setEndDate(nextFriday.toISOString().split('T')[0]);
-      } catch (err) {
+      } catch {
         setError('Failed to load data');
       }
     }
@@ -57,8 +60,8 @@ export default function WeeklyReport() {
     try {
       const reportData = await getWeeklyReport(selectedUserId, startDate, endDate);
       setReport(reportData);
-    } catch (err) {
-      setError(err.message || 'Failed to generate report');
+    } catch (error) {
+      setError(error.message || 'Failed to generate report');
     } finally {
       setLoading(false);
     }
@@ -69,8 +72,74 @@ export default function WeeklyReport() {
     navigate('/login');
   };
 
+  const handleEditMark = (mark) => {
+    setEditingMark(mark);
+    setCreatingMark(null);
+    setShowModal(true);
+  };
+
+  const handleCreateMark = (clockInId, markType) => {
+    setCreatingMark({ clockInId, markType });
+    setEditingMark(null);
+    setShowModal(true);
+  };
+
+  const handleDeleteMark = async (markId) => {
+    if (!window.confirm('Are you sure you want to delete this mark?')) {
+      return;
+    }
+
+    try {
+      await deleteMark(markId);
+      // Refrescar el reporte
+      if (selectedUserId && startDate && endDate) {
+        await handleGenerateReport();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to delete mark');
+    }
+  };
+
+  const handleSaveMark = async (formData) => {
+    try {
+      setError('');
+      setLoading(true);
+      
+      if (editingMark) {
+        // Actualizar mark existente
+        await updateMark(editingMark.id, formData);
+      } else if (creatingMark && report) {
+        // Crear nuevo mark
+        await createMark({
+          user_id: report.user_id,
+          mark_type: creatingMark.markType,
+          timestamp: formData.timestamp,
+          latitude: parseFloat(formData.latitude),
+          longitude: parseFloat(formData.longitude),
+          po_number: formData.po_number || null,
+        });
+      }
+
+      setShowModal(false);
+      setEditingMark(null);
+      setCreatingMark(null);
+      
+      // Refrescar el reporte
+      if (selectedUserId && startDate && endDate) {
+        await handleGenerateReport();
+      }
+    } catch (error) {
+      setError(error.message || 'Failed to save mark');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatDateTime = (isoString) => {
-    const date = new Date(isoString);
+    // Mostrar en hora local. Si el timestamp no trae timezone, asumir UTC y convertir.
+    const TREAT_NAIVE_AS_UTC = true;
+    const hasTz = /(?:Z|[+-]\d{2}:\d{2})$/.test(isoString);
+    const date = new Date(hasTz ? isoString : (TREAT_NAIVE_AS_UTC ? `${isoString}Z` : isoString));
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -80,7 +149,13 @@ export default function WeeklyReport() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Tratar fechas sin hora: si no tienen hora, asumir medianoche UTC y convertir a local
+    const TREAT_NAIVE_AS_UTC = true;
+    const hasTime = /T/.test(dateString);
+    const source = hasTime
+      ? dateString
+      : (TREAT_NAIVE_AS_UTC ? `${dateString}T00:00:00Z` : `${dateString}T00:00:00`);
+    const date = new Date(source);
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
@@ -269,7 +344,7 @@ export default function WeeklyReport() {
                             >
                               <div className="grid md:grid-cols-3 gap-4">
                                 {/* Clock In */}
-                                <div>
+                                <div className="relative">
                                   <p className="text-xs font-semibold text-green-600 mb-1">
                                     CLOCK IN
                                   </p>
@@ -284,10 +359,26 @@ export default function WeeklyReport() {
                                       PO: {session.clock_in.po_number}
                                     </p>
                                   )}
+                                  <div className="mt-2 flex gap-1">
+                                    <button
+                                      onClick={() => handleEditMark(session.clock_in)}
+                                      className="px-3 py-1.5 text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-md border border-blue-600 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+                                      title="Edit Clock In"
+                                    >
+                                      ✏️ Edit
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteMark(session.clock_in.id)}
+                                      className="px-3 py-1.5 text-xs font-semibold bg-white text-red-600 hover:bg-red-50 rounded-md border border-red-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-200 transition"
+                                      title="Delete Clock In"
+                                    >
+                                      🗑️ Delete
+                                    </button>
+                                  </div>
                                 </div>
 
                                 {/* Clock Out */}
-                                <div>
+                                <div className="relative">
                                   {session.clock_out ? (
                                     <>
                                       <p className="text-xs font-semibold text-red-600 mb-1">
@@ -304,11 +395,36 @@ export default function WeeklyReport() {
                                           PO: {session.clock_out.po_number}
                                         </p>
                                       )}
+                                      <div className="mt-2 flex gap-1">
+                                        <button
+                                          onClick={() => handleEditMark(session.clock_out)}
+                                          className="px-3 py-1.5 text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-md border border-blue-600 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+                                          title="Edit Clock Out"
+                                        >
+                                          ✏️ Edit
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteMark(session.clock_out.id)}
+                                          className="px-3 py-1.5 text-xs font-semibold bg-white text-red-600 hover:bg-red-50 rounded-md border border-red-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-200 transition"
+                                          title="Delete Clock Out"
+                                        >
+                                          🗑️ Delete
+                                        </button>
+                                      </div>
                                     </>
                                   ) : (
-                                    <p className="text-sm text-yellow-600 italic">
-                                      No clock out recorded
-                                    </p>
+                                    <div>
+                                      <p className="text-sm text-yellow-600 italic mb-2">
+                                        No clock out recorded
+                                      </p>
+                                      <button
+                                        onClick={() => handleCreateMark(session.clock_in.id, 'clock_out')}
+                                        className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-md border border-emerald-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 transition"
+                                        title="Add Clock Out"
+                                      >
+                                        ➕ Add Clock Out
+                                      </button>
+                                    </div>
                                   )}
                                 </div>
 
@@ -337,6 +453,248 @@ export default function WeeklyReport() {
         <div className="text-xs text-gray-400 text-center mt-8">
           © {new Date().getFullYear()} M-Electric. All rights reserved.
         </div>
+      </div>
+
+      {/* Modal para editar/crear mark */}
+      {showModal && (
+        <MarkEditModal
+          mark={editingMark}
+          creatingMark={creatingMark}
+          report={report}
+          onClose={() => {
+            setShowModal(false);
+            setEditingMark(null);
+            setCreatingMark(null);
+          }}
+          onSave={handleSaveMark}
+          error={error}
+        />
+      )}
+    </div>
+  );
+}
+
+// Componente Modal para editar/crear mark
+function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
+  // Si estamos creando un clock out, obtener el clock_in correspondiente
+  const clockInMark = creatingMark && report ? (() => {
+    for (const day of report.daily_reports) {
+      for (const session of day.sessions) {
+        if (session.clock_in?.id === creatingMark.clockInId) {
+          return session.clock_in;
+        }
+      }
+    }
+    return null;
+  })() : null;
+
+  // Helper para convertir timestamp UTC (desde backend) a formato datetime-local (hora local del usuario)
+  const utcToLocalInput = (timestampString) => {
+    // El backend envía timestamps como ISO sin 'Z' (naive UTC), ej: "2025-11-06T02:21:00"
+    // JavaScript trata strings sin timezone como hora LOCAL, pero nosotros sabemos que es UTC
+    // Necesitamos agregar 'Z' para que JavaScript lo trate como UTC, luego convierte a local
+    
+    // Detectar si ya tiene timezone explícito al final del string (Z o ±HH:MM)
+    const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/.test(timestampString);
+    
+    // Si no tiene timezone, agregar 'Z' para indicar UTC
+    const utcTimestamp = hasTimezone ? timestampString : `${timestampString}Z`;
+    
+    // Crear fecha: con 'Z', JavaScript lo trata como UTC y convierte a hora local automáticamente
+    const date = new Date(utcTimestamp);
+    
+    // Verificar que la fecha sea válida
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date:', timestampString);
+      return new Date().toISOString().slice(0, 16);
+    }
+    
+    // Los métodos getHours(), getMonth(), etc. ya devuelven valores en hora local
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // Helper para convertir datetime-local input (hora local del usuario) a UTC naive para guardar
+  const localInputToUTC = (localInputString) => {
+    // El input datetime-local da un string sin timezone (YYYY-MM-DDTHH:mm) en hora local del usuario
+    // Necesitamos convertir esa hora local a UTC antes de guardar
+    // 1. Crear un Date tratando el string como hora local
+    const localDate = new Date(localInputString);
+    
+    // 2. Obtener los componentes UTC de esa fecha
+    const year = localDate.getUTCFullYear();
+    const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getUTCDate()).padStart(2, '0');
+    const hours = String(localDate.getUTCHours()).padStart(2, '0');
+    const minutes = String(localDate.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(localDate.getUTCSeconds()).padStart(2, '0');
+    
+    // 3. Devolver en formato ISO sin 'Z' (naive UTC)
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  };
+
+  const [formData, setFormData] = useState(() => {
+    if (mark) {
+      // Editar mark existente - mostrar en hora local del usuario
+      return {
+        timestamp: utcToLocalInput(mark.timestamp),
+        latitude: mark.latitude?.toString() || '',
+        longitude: mark.longitude?.toString() || '',
+        po_number: mark.po_number || '',
+        address: mark.address || '',
+      };
+    } else if (clockInMark) {
+      // Crear nuevo clock out - usar valores del clock_in como base (mostrar en hora local)
+      return {
+        timestamp: utcToLocalInput(clockInMark.timestamp),
+        latitude: clockInMark.latitude?.toString() || '',
+        longitude: clockInMark.longitude?.toString() || '',
+        po_number: clockInMark.po_number || '',
+        address: clockInMark.address || '',
+      };
+    } else {
+      // Fallback - hora actual en formato local para el input
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return {
+        timestamp: `${year}-${month}-${day}T${hours}:${minutes}`,
+        latitude: '',
+        longitude: '',
+        po_number: '',
+        address: '',
+      };
+    }
+  });
+
+  const isCreating = creatingMark !== null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const submitData = {
+      // Convertir de vuelta a UTC: el input datetime-local da hora local, pero queremos UTC
+      timestamp: localInputToUTC(formData.timestamp),
+      latitude: parseFloat(formData.latitude) || undefined,
+      longitude: parseFloat(formData.longitude) || undefined,
+      po_number: formData.po_number || undefined,
+      address: formData.address || undefined,
+    };
+    
+    onSave(submitData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <h3 className="text-xl font-bold mb-4">
+          {isCreating ? 'Create Clock Out' : 'Edit Mark'}
+        </h3>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Timestamp *
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.timestamp}
+                onChange={(e) => setFormData({ ...formData, timestamp: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Latitude *
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={formData.latitude}
+                  onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  min="-90"
+                  max="90"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Longitude *
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={formData.longitude}
+                  onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  min="-180"
+                  max="180"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                PO Number (optional)
+              </label>
+              <input
+                type="text"
+                value={formData.po_number}
+                onChange={(e) => setFormData({ ...formData, po_number: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Address (optional - will be auto-filled from coordinates)
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 flex gap-3 justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+            >
+              {isCreating ? 'Create' : 'Save'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
