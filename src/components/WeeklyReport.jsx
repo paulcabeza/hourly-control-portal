@@ -149,12 +149,9 @@ export default function WeeklyReport() {
   };
 
   const formatDate = (dateString) => {
-    // Tratar fechas sin hora: si no tienen hora, asumir medianoche UTC y convertir a local
-    const TREAT_NAIVE_AS_UTC = true;
+    // Para mantener consistencia con la agrupación del backend, tratamos las fechas sin hora como locales
     const hasTime = /T/.test(dateString);
-    const source = hasTime
-      ? dateString
-      : (TREAT_NAIVE_AS_UTC ? `${dateString}T00:00:00Z` : `${dateString}T00:00:00`);
+    const source = hasTime ? dateString : `${dateString}T00:00:00`;
     const date = new Date(source);
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
