@@ -9,13 +9,16 @@ const getAuthHeaders = () => {
     };
 };
 
-export const getWeeklyReport = async (userId, startDate = null, endDate = null) => {
+export const getWeeklyReport = async (userId, startDate = null, endDate = null, timezoneOffsetMinutes = null) => {
     try {
         let url = `${API_URL}/marks/weekly-report/${userId}`;
         const params = new URLSearchParams();
         
         if (startDate) params.append('start_date', startDate);
         if (endDate) params.append('end_date', endDate);
+        if (timezoneOffsetMinutes !== null && timezoneOffsetMinutes !== undefined) {
+            params.append('timezone_offset_minutes', timezoneOffsetMinutes.toString());
+        }
         
         if (params.toString()) {
             url += `?${params.toString()}`;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllUsers, getCurrentUser, logout } from '../services/auth';
 import { getWeeklyReport, updateMark, createMark, deleteMark } from '../services/reports';
@@ -16,6 +16,7 @@ export default function WeeklyReport() {
   const [creatingMark, setCreatingMark] = useState(null); // { clockInId, markType }
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
+  const timezoneOffsetMinutes = useMemo(() => new Date().getTimezoneOffset(), []);
 
   useEffect(() => {
     async function fetchData() {
@@ -58,7 +59,7 @@ export default function WeeklyReport() {
     setError('');
     
     try {
-      const reportData = await getWeeklyReport(selectedUserId, startDate, endDate);
+            const reportData = await getWeeklyReport(selectedUserId, startDate, endDate, timezoneOffsetMinutes);
       setReport(reportData);
     } catch (error) {
       setError(error.message || 'Failed to generate report');
