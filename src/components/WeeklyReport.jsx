@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllUsers, getCurrentUser, logout } from '../services/auth';
 import { getWeeklyReport, updateMark, createMark, deleteMark } from '../services/reports';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function WeeklyReport() {
   const [user, setUser] = useState(null);
@@ -65,6 +67,115 @@ export default function WeeklyReport() {
       setError(error.message || 'Failed to generate report');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenPdf = () => {
+    if (!report || !report.daily_reports || report.daily_reports.length === 0) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: 'a4'
+      });
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.text('M ELECTRIC, LLC', pageWidth / 2, 40, { align: 'center' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      const headerStartY = 70;
+      doc.text(`Name: ${report.user_name || ''}`, 50, headerStartY);
+      doc.text(`From: ${formatPdfDate(report.start_date)}`, 50, headerStartY + 20);
+      doc.text(`To: ${formatPdfDate(report.end_date)}`, pageWidth / 2, headerStartY + 20);
+
+      const bodyRows = [];
+      report.daily_reports.forEach((day) => {
+        if (!day.sessions || day.sessions.length === 0) {
+          bodyRows.push([
+            formatPdfDate(day.date),
+            '',
+            '',
+            '',
+            '',
+            day.total_hours ? day.total_hours.toFixed(2) : '',
+            '',
+            ''
+          ]);
+          return;
+        }
+
+        day.sessions.forEach((session) => {
+          const clockIn = session.clock_in;
+          const clockOut = session.clock_out;
+          const addresses = [clockIn?.address, clockOut?.address]
+            .filter((value, index, arr) => value && arr.indexOf(value) === index)
+            .join('\n');
+
+          const jobPo = clockOut?.po_number || clockIn?.po_number || '';
+
+          bodyRows.push([
+            formatPdfDate(day.date),
+            '',
+            clockIn ? formatPdfTime(clockIn.timestamp) : '',
+            clockOut ? formatPdfTime(clockOut.timestamp) : '',
+            '',
+            session.hours_worked ? session.hours_worked.toFixed(2) : '',
+            jobPo,
+            addresses
+          ]);
+        });
+      });
+
+      if (bodyRows.length === 0) {
+        bodyRows.push(['', '', '', '', '', '', '', '']);
+      }
+
+      autoTable(doc, {
+        head: [['DATE', 'WORK DESCRIPTION', 'CLOCK IN', 'CLOCK OUT', 'LUNCH', 'HOURS', 'JOB/PO', 'ADDRESSES']],
+        body: bodyRows,
+        startY: headerStartY + 40,
+        margin: { left: 40, right: 40 },
+        theme: 'grid',
+        styles: { fontSize: 11, cellPadding: 6, overflow: 'linebreak' },
+        headStyles: { fillColor: [47, 84, 150], textColor: 255, fontStyle: 'bold', halign: 'center' },
+        columnStyles: {
+          0: { cellWidth: 90 },
+          1: { cellWidth: 110 },
+          2: { cellWidth: 80 },
+          3: { cellWidth: 80 },
+          4: { cellWidth: 60, halign: 'center' },
+          5: { cellWidth: 60, halign: 'center' },
+          6: { cellWidth: 80 },
+          7: { cellWidth: 200 }
+        },
+        alternateRowStyles: { fillColor: [245, 245, 245] }
+      });
+
+      const tableBottom = doc.lastAutoTable?.finalY || headerStartY + 40;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(
+        `TOTAL HOURS: ${Number(report.total_hours || 0).toFixed(2)} hrs`,
+        pageWidth - 200,
+        tableBottom + 30
+      );
+
+      const pdfBlob = doc.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
+    } catch (err) {
+      console.error('Failed to generate PDF', err);
+      setError('Failed to generate PDF');
     }
   };
 
@@ -159,6 +270,37 @@ export default function WeeklyReport() {
       month: 'long',
       day: 'numeric',
       year: 'numeric'
+    });
+  };
+
+  const toLocalDate = (timestampString) => {
+    if (!timestampString) return null;
+    const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/.test(timestampString);
+    const date = new Date(hasTimezone ? timestampString : `${timestampString}Z`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const formatPdfDate = (dateString) => {
+    if (!dateString) return '';
+    const hasTime = /T/.test(dateString);
+    const source = hasTime ? dateString : `${dateString}T00:00:00Z`;
+    const date = new Date(source);
+    if (Number.isNaN(date.getTime())) {
+      return dateString;
+    }
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatPdfTime = (timestampString) => {
+    const date = toLocalDate(timestampString);
+    if (!date) return '';
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -282,13 +424,28 @@ export default function WeeklyReport() {
               </div>
             )}
 
-            <button
-              onClick={handleGenerateReport}
-              disabled={loading}
-              className="mt-6 px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-sm transition disabled:bg-gray-400"
-            >
-              {loading ? 'Generating...' : '📊 Generate Report'}
-            </button>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={handleGenerateReport}
+                disabled={loading}
+                className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-sm transition disabled:bg-gray-400"
+              >
+                {loading ? 'Generating...' : '📊 Generate Report'}
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenPdf}
+                disabled={
+                  loading ||
+                  !report ||
+                  !report.daily_reports ||
+                  report.daily_reports.length === 0
+                }
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition disabled:bg-gray-400"
+              >
+                🖨️ Print PDF
+              </button>
+            </div>
           </div>
 
           {/* Reporte */}
