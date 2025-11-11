@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import MapComponent from './MapComponent';
 import MarkButton from './MarkButton';
 import MarkModal from './MarkModal';
@@ -14,25 +14,47 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [poLocked, setPoLocked] = useState(false);
+  const [canClockOut, setCanClockOut] = useState(false);
   const navigate = useNavigate();
+
+  const refreshClockState = useCallback(async () => {
+    try {
+      const marks = await getMyMarks();
+      const lastMark = marks && marks.length > 0 ? marks[0] : null;
+      const readyForClockOut = Boolean(lastMark && lastMark.mark_type === 'clock_in');
+      setCanClockOut(readyForClockOut);
+      return lastMark;
+    } catch (err) {
+      console.error('Failed to refresh clock state:', err);
+      setCanClockOut(false);
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchUser() {
       const data = await getCurrentUser();
       setUser(data);
+      if (data) {
+        await refreshClockState();
+      }
     }
     fetchUser();
-  }, []);
+  }, [refreshClockState]);
 
   const handleOpenModal = async (type) => {
+    if (type === 'out' && !canClockOut) {
+      setError('You need to clock in before clocking out.');
+      return;
+    }
+
     setCurrentType(type);
     setError('');
     setSuccess('');
 
     if (type === 'out') {
       try {
-        const marks = await getMyMarks();
-        const lastMark = marks && marks.length > 0 ? marks[0] : null;
+        const lastMark = await refreshClockState();
 
         if (lastMark && lastMark.mark_type === 'clock_in') {
           const lastPo = lastMark.po_number ?? '';
@@ -82,9 +104,11 @@ export default function HomePage() {
             if (currentType === 'in') {
               await clockIn(latitude, longitude, po);
               setSuccess('Clock In successful!');
+            await refreshClockState();
             } else {
               await clockOut(latitude, longitude, po);
               setSuccess('Clock Out successful!');
+            await refreshClockState();
             }
             
             // Cerrar modal después de 1.5 segundos
@@ -197,7 +221,7 @@ export default function HomePage() {
           {/* Clock In/Out Buttons */}
           <div className="flex flex-col md:flex-row justify-center gap-6 mt-6">
             <MarkButton type="in" onClick={handleOpenModal} />
-            <MarkButton type="out" onClick={handleOpenModal} />
+            <MarkButton type="out" onClick={handleOpenModal} disabled={!canClockOut} />
           </div>
 
           {/* Modal */}
