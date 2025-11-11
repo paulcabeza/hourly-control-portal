@@ -3,7 +3,7 @@ import MapComponent from './MapComponent';
 import MarkButton from './MarkButton';
 import MarkModal from './MarkModal';
 import { useNavigate } from 'react-router-dom';
-import { logout, getCurrentUser, clockIn, clockOut } from '../services/auth';
+import { logout, getCurrentUser, clockIn, clockOut, getMyMarks } from '../services/auth';
 
 export default function HomePage() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -13,6 +13,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [poLocked, setPoLocked] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,17 +24,43 @@ export default function HomePage() {
     fetchUser();
   }, []);
 
-  const handleOpenModal = (type) => {
+  const handleOpenModal = async (type) => {
     setCurrentType(type);
-    setModalIsOpen(true);
     setError('');
     setSuccess('');
+
+    if (type === 'out') {
+      try {
+        const marks = await getMyMarks();
+        const lastMark = marks && marks.length > 0 ? marks[0] : null;
+
+        if (lastMark && lastMark.mark_type === 'clock_in') {
+          const lastPo = lastMark.po_number ?? '';
+          setPo(lastPo);
+          setPoLocked(true);
+        } else {
+          setPo('');
+          setPoLocked(false);
+        }
+      } catch (err) {
+        console.error('Failed to prefill PO for clock out:', err);
+        setError('Could not prefill PO for clock out. Please try again.');
+        setPo('');
+        setPoLocked(false);
+      }
+    } else {
+      setPo('');
+      setPoLocked(false);
+    }
+
+    setModalIsOpen(true);
   };
 
   const handleCloseModal = () => {
     setModalIsOpen(false);
     setPo('');
     setError('');
+    setPoLocked(false);
   };
 
   const handleSaveMark = async () => {
@@ -181,6 +208,7 @@ export default function HomePage() {
             currentType={currentType}
             po={po}
             setPo={setPo}
+            poLocked={poLocked}
             loading={loading}
             error={error}
             success={success}
