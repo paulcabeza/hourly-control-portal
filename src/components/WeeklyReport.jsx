@@ -70,115 +70,6 @@ export default function WeeklyReport() {
     }
   };
 
-  const handleOpenPdf = () => {
-    if (!report || !report.daily_reports || report.daily_reports.length === 0) {
-      return;
-    }
-
-    setError('');
-
-    try {
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: 'a4'
-      });
-      const pageWidth = doc.internal.pageSize.getWidth();
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(20);
-      doc.text('M ELECTRIC, LLC', pageWidth / 2, 40, { align: 'center' });
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(12);
-      const headerStartY = 70;
-      doc.text(`Name: ${report.user_name || ''}`, 50, headerStartY);
-      doc.text(`From: ${formatPdfDate(report.start_date)}`, 50, headerStartY + 20);
-      doc.text(`To: ${formatPdfDate(report.end_date)}`, pageWidth / 2, headerStartY + 20);
-
-      const bodyRows = [];
-      report.daily_reports.forEach((day) => {
-        if (!day.sessions || day.sessions.length === 0) {
-          bodyRows.push([
-            formatPdfDate(day.date),
-            '',
-            '',
-            '',
-            '',
-            day.total_hours ? day.total_hours.toFixed(2) : '',
-            '',
-            ''
-          ]);
-          return;
-        }
-
-        day.sessions.forEach((session) => {
-          const clockIn = session.clock_in;
-          const clockOut = session.clock_out;
-          const addresses = [clockIn?.address, clockOut?.address]
-            .filter((value, index, arr) => value && arr.indexOf(value) === index)
-            .join('\n');
-
-          const jobPo = clockOut?.po_number || clockIn?.po_number || '';
-
-          bodyRows.push([
-            formatPdfDate(day.date),
-            '',
-            clockIn ? formatPdfTime(clockIn.timestamp) : '',
-            clockOut ? formatPdfTime(clockOut.timestamp) : '',
-            '',
-            session.hours_worked ? session.hours_worked.toFixed(2) : '',
-            jobPo,
-            addresses
-          ]);
-        });
-      });
-
-      if (bodyRows.length === 0) {
-        bodyRows.push(['', '', '', '', '', '', '', '']);
-      }
-
-      autoTable(doc, {
-        head: [['DATE', 'WORK DESCRIPTION', 'CLOCK IN', 'CLOCK OUT', 'LUNCH', 'HOURS', 'JOB/PO', 'ADDRESSES']],
-        body: bodyRows,
-        startY: headerStartY + 40,
-        margin: { left: 40, right: 40 },
-        theme: 'grid',
-        styles: { fontSize: 11, cellPadding: 6, overflow: 'linebreak' },
-        headStyles: { fillColor: [47, 84, 150], textColor: 255, fontStyle: 'bold', halign: 'center' },
-        columnStyles: {
-          0: { cellWidth: 90 },
-          1: { cellWidth: 110 },
-          2: { cellWidth: 80 },
-          3: { cellWidth: 80 },
-          4: { cellWidth: 60, halign: 'center' },
-          5: { cellWidth: 60, halign: 'center' },
-          6: { cellWidth: 80 },
-          7: { cellWidth: 200 }
-        },
-        alternateRowStyles: { fillColor: [245, 245, 245] }
-      });
-
-      const tableBottom = doc.lastAutoTable?.finalY || headerStartY + 40;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text(
-        `TOTAL HOURS: ${Number(report.total_hours || 0).toFixed(2)} hrs`,
-        pageWidth - 200,
-        tableBottom + 30
-      );
-
-      const pdfBlob = doc.output('blob');
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
-    } catch (err) {
-      console.error('Failed to generate PDF', err);
-      setError('Failed to generate PDF');
-    }
-  };
-
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -247,32 +138,6 @@ export default function WeeklyReport() {
     }
   };
 
-  const formatDateTime = (isoString) => {
-    // Mostrar en hora local. Si el timestamp no trae timezone, asumir UTC y convertir.
-    const TREAT_NAIVE_AS_UTC = true;
-    const hasTz = /(?:Z|[+-]\d{2}:\d{2})$/.test(isoString);
-    const date = new Date(hasTz ? isoString : (TREAT_NAIVE_AS_UTC ? `${isoString}Z` : isoString));
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatDate = (dateString) => {
-    // Para mantener consistencia con la agrupación del backend, tratamos las fechas sin hora como locales
-    const hasTime = /T/.test(dateString);
-    const source = hasTime ? dateString : `${dateString}T00:00:00`;
-    const date = new Date(source);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
   const toLocalDate = (timestampString) => {
     if (!timestampString) return null;
     const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/.test(timestampString);
@@ -301,6 +166,140 @@ export default function WeeklyReport() {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
+    });
+  };
+
+  const handleOpenPdf = () => {
+    if (!report || !report.daily_reports || report.daily_reports.length === 0) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: 'a4'
+      });
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.text('M ELECTRIC, LLC', pageWidth / 2, 40, { align: 'center' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      const headerStartY = 70;
+      doc.text(`Name: ${report.user_name || ''}`, 50, headerStartY);
+      doc.text(`From: ${formatPdfDate(report.start_date)}`, 50, headerStartY + 20);
+      doc.text(`To: ${formatPdfDate(report.end_date)}`, pageWidth / 2, headerStartY + 20);
+
+      const bodyRows = [];
+      report.daily_reports.forEach((day) => {
+        if (!day.sessions || day.sessions.length === 0) {
+          bodyRows.push([
+            formatPdfDate(day.date),
+            '',
+            '',
+            '',
+            '',
+            day.total_hours ? day.total_hours.toFixed(2) : '',
+            '',
+            ''
+          ]);
+          return;
+        }
+
+        day.sessions.forEach((session) => {
+          const clockIn = session.clock_in;
+          const clockOut = session.clock_out;
+          const addresses = [clockIn?.address, clockOut?.address]
+            .filter((value, index, arr) => value && arr.indexOf(value) === index)
+            .join('\n');
+          const jobPo = clockOut?.po_number || clockIn?.po_number || '';
+
+          bodyRows.push([
+            formatPdfDate(day.date),
+            '',
+            clockIn ? formatPdfTime(clockIn.timestamp) : '',
+            clockOut ? formatPdfTime(clockOut.timestamp) : '',
+            '',
+            session.hours_worked ? session.hours_worked.toFixed(2) : '',
+            jobPo,
+            addresses
+          ]);
+        });
+      });
+
+      if (bodyRows.length === 0) {
+        bodyRows.push(['', '', '', '', '', '', '', '']);
+      }
+
+      autoTable(doc, {
+        head: [['DATE', 'WORK DESCRIPTION', 'CLOCK IN', 'CLOCK OUT', 'LUNCH', 'HOURS', 'JOB/PO', 'ADDRESSES']],
+        body: bodyRows,
+        startY: headerStartY + 40,
+        margin: { left: 40, right: 40 },
+        theme: 'grid',
+        styles: { fontSize: 11, cellPadding: 6, overflow: 'linebreak' },
+        headStyles: { fillColor: [47, 84, 150], textColor: 255, fontStyle: 'bold', halign: 'center' },
+        columnStyles: {
+          0: { cellWidth: 90 },
+          1: { cellWidth: 110 },
+          2: { cellWidth: 80 },
+          3: { cellWidth: 80 },
+          4: { cellWidth: 60, halign: 'center' },
+          5: { cellWidth: 60, halign: 'center' },
+          6: { cellWidth: 80 },
+          7: { cellWidth: 200 }
+        },
+        alternateRowStyles: { fillColor: [245, 245, 245] }
+      });
+
+      const tableBottom = doc.lastAutoTable?.finalY || headerStartY + 40;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(
+        `TOTAL HOURS: ${Number(report.total_hours || 0).toFixed(2)} hrs`,
+        pageWidth - 200,
+        tableBottom + 30
+      );
+
+      const pdfBlob = doc.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
+    } catch (err) {
+      console.error('Failed to generate PDF', err);
+      setError('Failed to generate PDF');
+    }
+  };
+
+  const formatDateTime = (isoString) => {
+    // Mostrar en hora local. Si el timestamp no trae timezone, asumir UTC y convertir.
+    const TREAT_NAIVE_AS_UTC = true;
+    const hasTz = /(?:Z|[+-]\d{2}:\d{2})$/.test(isoString);
+    const date = new Date(hasTz ? isoString : (TREAT_NAIVE_AS_UTC ? `${isoString}Z` : isoString));
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatDate = (dateString) => {
+    // Para mantener consistencia con la agrupación del backend, tratamos las fechas sin hora como locales
+    const hasTime = /T/.test(dateString);
+    const source = hasTime ? dateString : `${dateString}T00:00:00`;
+    const date = new Date(source);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
