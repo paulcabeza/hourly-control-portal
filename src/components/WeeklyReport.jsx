@@ -120,6 +120,7 @@ export default function WeeklyReport() {
           latitude: parseFloat(formData.latitude),
           longitude: parseFloat(formData.longitude),
           po_number: formData.po_number || null,
+          clock_in_id: formData.clock_in_id ?? undefined,
         });
       }
 
@@ -642,6 +643,33 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
     return null;
   })() : null;
 
+  const nextClockInMark = useMemo(() => {
+    if (!clockInMark || !report) {
+      return null;
+    }
+
+    let foundCurrent = false;
+    for (const day of report.daily_reports || []) {
+      for (const session of day.sessions || []) {
+        if (session.clock_in?.id === clockInMark.id) {
+          foundCurrent = true;
+          continue;
+        }
+
+        if (foundCurrent && session.clock_in) {
+          return session.clock_in;
+        }
+      }
+
+      if (foundCurrent) {
+        // Continue searching subsequent days
+        continue;
+      }
+    }
+
+    return null;
+  }, [clockInMark, report]);
+
   // Helper para convertir timestamp UTC (desde backend) a formato datetime-local (hora local del usuario)
   const utcToLocalInput = (timestampString) => {
     // El backend envía timestamps como ISO sin 'Z' (naive UTC), ej: "2025-11-06T02:21:00"
@@ -692,6 +720,27 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   };
 
+  const parseInputToLocalDate = (localInputString) => {
+    if (!localInputString) return null;
+    const date = new Date(localInputString);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const parseBackendTimestampToLocalDate = (timestampString) => {
+    if (!timestampString) return null;
+    const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/.test(timestampString);
+    const date = new Date(hasTimezone ? timestampString : `${timestampString}Z`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const [validationError, setValidationError] = useState('');
+  const markId = mark?.id;
+  const creatingClockInId = creatingMark?.clockInId;
+
+  useEffect(() => {
+    setValidationError('');
+  }, [markId, creatingClockInId, clockInMark?.id]);
+
   const [formData, setFormData] = useState(() => {
     if (mark) {
       // Editar mark existente - mostrar en hora local del usuario
@@ -734,6 +783,33 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    setValidationError('');
+
+    const proposedLocalDate = parseInputToLocalDate(formData.timestamp);
+    if (!proposedLocalDate) {
+      setValidationError('Please provide a valid timestamp.');
+      return;
+    }
+
+    if (creatingMark && clockInMark) {
+      const clockInLocal = parseBackendTimestampToLocalDate(clockInMark.timestamp);
+      if (clockInLocal && proposedLocalDate <= clockInLocal) {
+        setValidationError('Clock out must occur after the selected clock in.');
+        return;
+      }
+
+      const nextLocal = nextClockInMark
+        ? parseBackendTimestampToLocalDate(nextClockInMark.timestamp)
+        : null;
+
+      if (nextLocal && proposedLocalDate >= nextLocal) {
+        setValidationError(
+          `Clock out must be before the next clock in at ${nextLocal.toLocaleString()}`
+        );
+        return;
+      }
+    }
+
     const submitData = {
       // Convertir de vuelta a UTC: el input datetime-local da hora local, pero queremos UTC
       timestamp: localInputToUTC(formData.timestamp),
@@ -741,6 +817,7 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
       longitude: parseFloat(formData.longitude) || undefined,
       po_number: formData.po_number || undefined,
       address: formData.address || undefined,
+      clock_in_id: clockInMark?.id,
     };
     
     onSave(submitData);
@@ -756,6 +833,12 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
             {error}
+          </div>
+        )}
+
+        {validationError && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
+            {validationError}
           </div>
         )}
 
