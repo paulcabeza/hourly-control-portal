@@ -202,7 +202,7 @@ export default function WeeklyReport() {
         if (!day.sessions || day.sessions.length === 0) {
           bodyRows.push([
             formatPdfDate(day.date),
-            '',
+            // '', // WORK DESCRIPTION - comentado temporalmente
             '',
             '',
             '',
@@ -223,7 +223,7 @@ export default function WeeklyReport() {
 
           bodyRows.push([
             formatPdfDate(day.date),
-            '',
+            // '', // WORK DESCRIPTION - comentado temporalmente
             clockIn ? formatPdfTime(clockIn.timestamp) : '',
             clockOut ? formatPdfTime(clockOut.timestamp) : '',
             '',
@@ -235,11 +235,12 @@ export default function WeeklyReport() {
       });
 
       if (bodyRows.length === 0) {
-        bodyRows.push(['', '', '', '', '', '', '', '']);
+        bodyRows.push(['', '', '', '', '', '', '']); // Removido un elemento para work description
       }
 
       autoTable(doc, {
-        head: [['DATE', 'WORK DESCRIPTION', 'CLOCK IN', 'CLOCK OUT', 'LUNCH', 'HOURS', 'JOB/PO', 'ADDRESSES']],
+        // head: [['DATE', 'WORK DESCRIPTION', 'CLOCK IN', 'CLOCK OUT', 'LUNCH', 'HOURS', 'JOB/PO', 'ADDRESSES']], // WORK DESCRIPTION comentado temporalmente
+        head: [['DATE', 'CLOCK IN', 'CLOCK OUT', 'LUNCH', 'HOURS', 'JOB/PO', 'ADDRESSES']],
         body: bodyRows,
         startY: headerStartY + 40,
         margin: { left: 40, right: 40 },
@@ -248,13 +249,13 @@ export default function WeeklyReport() {
         headStyles: { fillColor: [47, 84, 150], textColor: 255, fontStyle: 'bold', halign: 'center' },
         columnStyles: {
           0: { cellWidth: 90 },
-          1: { cellWidth: 110 },
-          2: { cellWidth: 80 },
-          3: { cellWidth: 80 },
-          4: { cellWidth: 60, halign: 'center' },
-          5: { cellWidth: 60, halign: 'center' },
-          6: { cellWidth: 80 },
-          7: { cellWidth: 200 }
+          // 1: { cellWidth: 110 }, // WORK DESCRIPTION - comentado temporalmente
+          1: { cellWidth: 80 }, // CLOCK IN (antes era columna 2)
+          2: { cellWidth: 80 }, // CLOCK OUT (antes era columna 3)
+          3: { cellWidth: 60, halign: 'center' }, // LUNCH (antes era columna 4)
+          4: { cellWidth: 60, halign: 'center' }, // HOURS (antes era columna 5)
+          5: { cellWidth: 80 }, // JOB/PO (antes era columna 6)
+          6: { cellWidth: 200 } // ADDRESSES (antes era columna 7)
         },
         alternateRowStyles: { fillColor: [245, 245, 245] }
       });
