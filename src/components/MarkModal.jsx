@@ -3,7 +3,18 @@ import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
 
-function MarkModal({ isOpen, onRequestClose, onSave, currentType, po, setPo, loading, error, success }) {
+function MarkModal({
+  isOpen,
+  onRequestClose,
+  onSave,
+  currentType,
+  po,
+  setPo,
+  poLocked,
+  loading,
+  error,
+  success,
+}) {
   return (
     <Modal
       isOpen={isOpen}
@@ -59,21 +70,30 @@ function MarkModal({ isOpen, onRequestClose, onSave, currentType, po, setPo, loa
         </div>
       )}
       
-      <input
-        type="text"
-        value={po}
-        onChange={e => setPo(e.target.value)}
-        placeholder="Enter PO Number (optional)"
-        disabled={loading}
-        style={{
-          border:'1px solid #ddd',
-          padding:12,
-          borderRadius:8,
-          width:'100%',
-          marginBottom:20,
-          fontSize: '14px'
-        }}
-      />
+      <div style={{ marginBottom: 20 }}>
+        <input
+          type="text"
+          value={po}
+          onChange={e => setPo(e.target.value)}
+          placeholder="Enter PO Number (optional)"
+          disabled={loading || poLocked}
+          style={{
+            border: '1px solid #ddd',
+            padding: 12,
+            borderRadius: 8,
+            width: '100%',
+            fontSize: '14px',
+            backgroundColor: poLocked ? '#f3f4f6' : '#fff',
+            color: poLocked ? '#6b7280' : '#111827',
+            cursor: poLocked ? 'not-allowed' : 'text',
+          }}
+        />
+        {poLocked && (
+          <p style={{ fontSize: '12px', color: '#6b7280', marginTop: 6 }}>
+            This PO comes from your last clock in and cannot be changed for the clock out.
+          </p>
+        )}
+      </div>
       
       <div style={{display:'flex',gap:12,justifyContent:'center'}}>
         <button 
