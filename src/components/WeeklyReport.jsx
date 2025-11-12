@@ -75,8 +75,9 @@ export default function WeeklyReport() {
     navigate('/login');
   };
 
-  const handleEditMark = (mark) => {
-    setEditingMark(mark);
+  const handleEditMark = (mark, markType = null) => {
+    const markWithType = markType ? { ...mark, mark_type: markType } : mark;
+    setEditingMark(markWithType);
     setCreatingMark(null);
     setShowModal(true);
   };
@@ -516,7 +517,7 @@ export default function WeeklyReport() {
                                   )}
                                   <div className="mt-2 flex gap-1">
                                     <button
-                                      onClick={() => handleEditMark(session.clock_in)}
+                                      onClick={() => handleEditMark(session.clock_in, 'clock_in')}
                                       className="px-3 py-1.5 text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-md border border-blue-600 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
                                       title="Edit Clock In"
                                     >
@@ -552,7 +553,7 @@ export default function WeeklyReport() {
                                       )}
                                       <div className="mt-2 flex gap-1">
                                         <button
-                                          onClick={() => handleEditMark(session.clock_out)}
+                                          onClick={() => handleEditMark(session.clock_out, 'clock_out')}
                                           className="px-3 py-1.5 text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-md border border-blue-600 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
                                           title="Edit Clock Out"
                                         >
@@ -780,6 +781,10 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
 
   const isCreating = creatingMark !== null;
   const isCreatingClockOut = isCreating && creatingMark?.markType === 'clock_out';
+  const isEditingClockOut = Boolean(
+    mark && (mark.mark_type === 'clock_out' || mark.mark_type === 'CLOCK_OUT')
+  );
+  const disablePoField = isCreatingClockOut || isEditingClockOut;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -816,10 +821,12 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
       timestamp: localInputToUTC(formData.timestamp),
       latitude: parseFloat(formData.latitude) || undefined,
       longitude: parseFloat(formData.longitude) || undefined,
-      po_number: formData.po_number || undefined,
       address: formData.address || undefined,
       clock_in_id: clockInMark?.id,
     };
+    if (!disablePoField) {
+      submitData.po_number = formData.po_number || undefined;
+    }
     
     onSave(submitData);
   };
@@ -900,11 +907,11 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
                 type="text"
                 value={formData.po_number}
                 onChange={(e) => {
-                  if (isCreatingClockOut) return;
+                  if (disablePoField) return;
                   setFormData({ ...formData, po_number: e.target.value });
                 }}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${isCreatingClockOut ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
-                disabled={isCreatingClockOut}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${disablePoField ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                disabled={disablePoField}
               />
             </div>
 
