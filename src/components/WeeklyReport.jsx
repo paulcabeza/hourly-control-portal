@@ -779,6 +779,7 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
   });
 
   const isCreating = creatingMark !== null;
+  const isCreatingClockOut = isCreating && creatingMark?.markType === 'clock_out';
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -898,8 +899,12 @@ function MarkEditModal({ mark, creatingMark, report, onClose, onSave, error }) {
               <input
                 type="text"
                 value={formData.po_number}
-                onChange={(e) => setFormData({ ...formData, po_number: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                onChange={(e) => {
+                  if (isCreatingClockOut) return;
+                  setFormData({ ...formData, po_number: e.target.value });
+                }}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${isCreatingClockOut ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                disabled={isCreatingClockOut}
               />
             </div>
 
