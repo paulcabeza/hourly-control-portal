@@ -36,7 +36,10 @@ export default function MyMarksPage() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Mostrar en hora local. Si el timestamp no trae timezone, asumir UTC y convertir.
+    const TREAT_NAIVE_AS_UTC = true;
+    const hasTz = /(?:Z|[+-]\d{2}:\d{2})$/.test(dateString);
+    const date = new Date(hasTz ? dateString : (TREAT_NAIVE_AS_UTC ? `${dateString}Z` : dateString));
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
