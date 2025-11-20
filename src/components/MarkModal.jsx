@@ -26,20 +26,24 @@ function MarkModal({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          zIndex: 1000
+          zIndex: 1000,
+          padding: "1rem"
         },
         content: {
           position: "relative",
           background: "#fff",
-          padding: "2rem",
+          padding: "1.5rem",
           borderRadius: "0.5rem",
           maxWidth: "400px",
+          width: "100%",
           margin: "auto",
-          inset: "unset"
+          inset: "unset",
+          maxHeight: "90vh",
+          overflowY: "auto"
         }
       }}
     >
-      <h3 style={{fontWeight: "bold", marginBottom: 20, fontSize: '1.25rem'}}>
+      <h3 style={{fontWeight: "bold", marginBottom: 20, fontSize: '1.125rem', textAlign: 'center'}}>
         {currentType === 'in' ? 'Clock In' : 'Clock Out'}
       </h3>
       
@@ -79,10 +83,10 @@ function MarkModal({
           disabled={loading || poLocked}
           style={{
             border: '1px solid #ddd',
-            padding: 12,
+            padding: '14px',
             borderRadius: 8,
             width: '100%',
-            fontSize: '14px',
+            fontSize: '16px',
             backgroundColor: poLocked ? '#f3f4f6' : '#fff',
             color: poLocked ? '#6b7280' : '#111827',
             cursor: poLocked ? 'not-allowed' : 'text',
@@ -95,19 +99,21 @@ function MarkModal({
         )}
       </div>
       
-      <div style={{display:'flex',gap:12,justifyContent:'center'}}>
+      <div style={{display:'flex',gap:12,justifyContent:'center', flexWrap: 'wrap'}}>
         <button 
           onClick={onSave}
           disabled={loading}
           style={{
             background: loading ? '#9ca3af' : '#2563eb',
             color:'#fff',
-            padding:'10px 24px',
+            padding:'12px 28px',
             borderRadius:8,
             border:'none',
             fontWeight:600,
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
+            fontSize: '16px',
+            minWidth: '120px',
+            flex: '1 1 auto'
           }}
         >
           {loading ? 'Saving...' : 'Save'}
@@ -118,12 +124,14 @@ function MarkModal({
           style={{
             background:'#e5e7eb',
             color:'#1f2937',
-            padding:'10px 24px',
+            padding:'12px 28px',
             borderRadius:8,
             border:'none',
             fontWeight:600,
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
+            fontSize: '16px',
+            minWidth: '120px',
+            flex: '1 1 auto'
           }}
         >
           Cancel

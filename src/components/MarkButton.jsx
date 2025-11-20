@@ -8,10 +8,9 @@ function MarkButton({ type, onClick, disabled }) {
 
   return (
     <button
-      className={`w-40 py-3 text-lg font-semibold text-white rounded shadow ${color} transition-colors duration-150 mx-2 ${
+      className={`w-full sm:w-40 py-4 sm:py-3 text-base sm:text-lg font-semibold text-white rounded-lg shadow-lg ${color} transition-colors duration-150 ${
         disabled ? 'opacity-60 cursor-not-allowed bg-gray-400 hover:bg-gray-400' : ''
       }`}
-      style={{ minWidth: 150 }}
       onClick={() => {
         if (!disabled) {
           onClick(type);

@@ -143,83 +143,88 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
       {/* Header/Navbar */}
-      <nav className="bg-slate-800 text-white px-8 py-4 flex justify-between items-center shadow-lg">
-        <div>
-          <span className="font-bold text-2xl mr-2">M-Electric</span>
-          <span className="uppercase tracking-wide text-blue-400 font-semibold text-base">
+      <nav className="bg-slate-800 text-white px-4 sm:px-8 py-3 sm:py-4 flex justify-between items-center shadow-lg">
+        <div className="flex-1 min-w-0">
+          <span className="font-bold text-lg sm:text-2xl mr-1 sm:mr-2 block sm:inline">M-Electric</span>
+          <span className="uppercase tracking-wide text-blue-400 font-semibold text-xs sm:text-base block sm:inline sm:ml-2">
             Hourly Control
           </span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
           {/* Menú de Admin - siempre visible si es admin */}
           {isAdmin && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <button
                 onClick={() => navigate('/admin')}
-                className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+                className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
               >
-                🔧 Admin Panel
+                <span className="hidden sm:inline">🔧 Admin</span>
+                <span className="sm:hidden">🔧</span>
               </button>
               <button
                 onClick={() => navigate('/admin/users')}
-                className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+                className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
               >
-                👥 Users
+                <span className="hidden sm:inline">👥 Users</span>
+                <span className="sm:hidden">👥</span>
               </button>
               <button
                 onClick={() => navigate('/admin/weekly-report')}
-                className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+                className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
               >
-                📊 Reports
+                <span className="hidden sm:inline">📊 Reports</span>
+                <span className="sm:hidden">📊</span>
               </button>
             </div>
           )}
           {user && (
             <div
-              className="flex items-center px-3 py-1 border border-blue-100 rounded-full bg-blue-50 text-blue-900 shadow-sm transition select-none"
+              className="hidden sm:flex items-center px-3 py-1 border border-blue-100 rounded-full bg-blue-50 text-blue-900 shadow-sm transition select-none"
               title={user.email}
             >
               <span className="text-blue-400 mr-2 text-sm">👤</span>
-              {user.email}
+              <span className="text-xs truncate max-w-[100px]">{user.email}</span>
             </div>
           )}
           <button
             onClick={handleLogout}
-            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold transition"
+            className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold transition"
           >
-            Logout
+            <span className="hidden sm:inline">Logout</span>
+            <span className="sm:hidden">Out</span>
           </button>
         </div>
       </nav>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-10">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl px-10 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-10">
+        <div className="max-w-4xl mx-auto bg-white rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl px-4 sm:px-10 py-6 sm:py-8">
           {/* Título */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-1">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 sm:mb-8">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">
                 Welcome{user ? `, ${user.email.split('@')[0]}` : ''}!
               </h2>
-              <p className="text-gray-500 text-base">
+              <p className="text-gray-500 text-sm sm:text-base">
                 Use the buttons below to clock in or clock out and keep track of your work hours.
               </p>
             </div>
             <button
               onClick={() => navigate('/my-marks')}
-              className="mt-4 md:mt-0 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition"
+              className="mt-4 md:mt-0 px-4 sm:px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition text-sm sm:text-base w-full md:w-auto"
             >
-              📋 View My History
+              📋 <span className="hidden sm:inline">View My History</span>
+              <span className="sm:hidden">My History</span>
             </button>
           </div>
 
           {/* Map */}
-          <div className="mb-8 w-full rounded-lg overflow-hidden shadow">
+          <div className="mb-6 sm:mb-8 w-full rounded-lg overflow-hidden shadow">
             <MapComponent />
           </div>
 
           {/* Clock In/Out Buttons */}
-          <div className="flex flex-col md:flex-row justify-center gap-6 mt-6">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mt-4 sm:mt-6">
             <MarkButton type="in" onClick={handleOpenModal} />
             <MarkButton type="out" onClick={handleOpenModal} disabled={!canClockOut} />
           </div>
@@ -238,7 +243,7 @@ export default function HomePage() {
             success={success}
           />
         </div>
-        <div className="text-xs text-gray-400 text-center mt-8">
+        <div className="text-xs text-gray-400 text-center mt-4 sm:mt-8">
           © {new Date().getFullYear()} M-Electric. All rights reserved.
         </div>
       </div>

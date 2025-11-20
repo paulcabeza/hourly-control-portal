@@ -23,7 +23,7 @@ const MapComponent = () => {
     <MapContainer 
     center={position} 
     zoom={16} 
-    className="h-[300px] w-full"
+    className="h-[250px] sm:h-[300px] md:h-[350px] w-full"
     >
       <RecenterMap position={position} />
       <TileLayer
