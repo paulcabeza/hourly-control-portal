@@ -40,6 +40,37 @@ export const getWeeklyReport = async (userId, startDate = null, endDate = null, 
     }
 };
 
+export const getEmployeesSummaryReport = async (startDate = null, endDate = null, timezoneOffsetMinutes = null) => {
+    try {
+        let url = `${API_URL}/marks/summary-report`;
+        const params = new URLSearchParams();
+        
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        if (timezoneOffsetMinutes !== null && timezoneOffsetMinutes !== undefined) {
+            params.append('timezone_offset_minutes', timezoneOffsetMinutes.toString());
+        }
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        const response = await fetch(url, {
+            headers: getAuthHeaders(),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to get summary report');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Get summary report error:', error);
+        throw error;
+    }
+};
+
 export const updateMark = async (markId, markData) => {
     try {
         const response = await fetch(`${API_URL}/marks/${markId}`, {
@@ -98,4 +129,3 @@ export const deleteMark = async (markId) => {
         throw error;
     }
 };
-
