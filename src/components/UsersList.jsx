@@ -93,6 +93,12 @@ export default function UsersList() {
             >
               📊 Reports
             </button>
+            <button
+              onClick={() => navigate('/admin/summary-report')}
+              className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              📑 Summary
+            </button>
           </div>
           {user && (
             <div
