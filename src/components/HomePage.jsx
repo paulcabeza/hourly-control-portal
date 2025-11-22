@@ -175,6 +175,13 @@ export default function HomePage() {
                 <span className="hidden sm:inline">📊 Reports</span>
                 <span className="sm:hidden">📊</span>
               </button>
+              <button
+                onClick={() => navigate('/admin/summary-report')}
+                className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+              >
+                <span className="hidden sm:inline">📑 Summary</span>
+                <span className="sm:hidden">📑</span>
+              </button>
             </div>
           )}
           {user && (

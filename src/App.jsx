@@ -8,6 +8,7 @@ import UsersList from './components/UsersList';
 import CreateUser from './components/AdminPanel';
 import UserDetail from './components/UserDetail';
 import WeeklyReport from './components/WeeklyReport';
+import EmployeesSummaryReport from './components/EmployeesSummaryReport';
 import AdminRoute from './components/AdminRoute';
 import { getCurrentUser } from './services/auth';
 
@@ -102,6 +103,16 @@ function App() {
             <PrivateRoute>
               <AdminRoute>
                 <WeeklyReport />
+              </AdminRoute>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/summary-report"
+          element={
+            <PrivateRoute>
+              <AdminRoute>
+                <EmployeesSummaryReport />
               </AdminRoute>
             </PrivateRoute>
           }

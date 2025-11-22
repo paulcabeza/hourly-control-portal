@@ -73,6 +73,12 @@ export default function AdminDashboard() {
             >
               📊 Reports
             </button>
+            <button
+              onClick={() => navigate('/admin/summary-report')}
+              className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              📑 Summary
+            </button>
           </div>
           {user && (
             <div
@@ -145,6 +151,26 @@ export default function AdminDashboard() {
                 </p>
                 <button className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition">
                   View Reports →
+                </button>
+              </div>
+            </div>
+            {/* Card 3: Employees Summary */}
+            <div
+              onClick={() => navigate('/admin/summary-report')}
+              className="bg-white rounded-2xl shadow-xl p-8 cursor-pointer transform transition hover:scale-105 hover:shadow-2xl"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+                  <span className="text-5xl">📑</span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-3">
+                  Employees Summary
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  View a summary of total hours worked by all employees in a given period.
+                </p>
+                <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition">
+                  View Summary →
                 </button>
               </div>
             </div>

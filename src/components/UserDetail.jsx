@@ -104,6 +104,26 @@ export default function UserDetail() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 mr-4">
+             <button
+              onClick={() => navigate('/admin')}
+              className="px-3 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              🔧 Admin
+            </button>
+            <button
+              onClick={() => navigate('/admin/weekly-report')}
+              className="px-3 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              📊 Reports
+            </button>
+             <button
+              onClick={() => navigate('/admin/summary-report')}
+              className="px-3 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold transition"
+            >
+              📑 Summary
+            </button>
+          </div>
           <button
             onClick={handleBackToList}
             className="px-4 py-2 text-sm bg-gray-600 hover:bg-gray-700 rounded text-white font-semibold transition"
